@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price It Right — Ceramic Pricing Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --clay:        #C4733F;
+  --clay-dark:   #7B4A2D;
+  --clay-light:  #F5E6D8;
+  --clay-bg:     #FBF3EC;
+  --sage:        #1D9E75;
+  --sage-dark:   #157A5A;
+  --sage-bg:     #E4F5EE;
+  --amber:       #BA7517;
+  --amber-bg:    #FDF3DC;
+  --smoke:       #2C2C2A;
+  --ash:         #5F5E5A;
+  --off:         #9E9C96;
+  --cream:       #FAF7F2;
+  --card:        #FFFFFF;
+  --surface2:    #F5F1EB;
+  --border:      #DDD8CF;
+  --border-mid:  #C8C3BA;
+  --r-sm:        6px;
+  --r-md:        10px;
+  --r-lg:        14px;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.07);
+  --shadow-md:   0 3px 12px rgba(0,0,0,0.09);
+}
+
+[data-theme="dark"] {
+  --clay:        #D4855A;
+  --clay-dark:   #A86240;
+  --clay-light:  #2E1C10;
+  --clay-bg:     #251510;
+  --sage:        #3DBF8E;
+  --sage-dark:   #2A9A72;
+  --sage-bg:     #0E2A1F;
+  --amber:       #D4903A;
+  --amber-bg:    #2A1E08;
+  --smoke:       #F0EBE3;
+  --ash:         #A09080;
+  --off:         #6B665E;
+  --cream:       #1A1714;
+  --card:        #232019;
+  --surface2:    #2C2820;
+  --border:      #3D3830;
+  --border-mid:  #504840;
+}
+
+html { font-size: 16px; }
+body {
+  background: var(--cream);
+  color: var(--smoke);
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── Grain texture ── */
+.grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px;
+}
+
+/* ── Header ── */
+header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
+}
+.suite-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--clay);
+  margin-bottom: 2px;
+}
+.app-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: var(--smoke);
+  line-height: 1.1;
+}
+.app-title em { font-style: italic; color: var(--clay); }
+.header-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.hfield { display: flex; align-items: center; gap: 7px; }
+.hfield label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ash);
+  white-space: nowrap;
+}
+.h-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: 'Instrument Sans', sans-serif;
+  color: var(--smoke);
+  -moz-appearance: textfield;
+}
+.h-input::-webkit-inner-spin-button, .h-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.h-input:focus { outline: none; border-color: var(--clay); background: var(--card); }
+
+/* ── Buttons ── */
+.btn-icon {
+  background: transparent; border: none; cursor: pointer;
+  padding: 6px 8px; border-radius: var(--r-sm);
+  color: var(--ash); font-size: 17px; line-height: 1;
+  transition: background 0.15s;
+}
+.btn-icon:hover { background: var(--surface2); }
+.btn-danger {
+  background: transparent; color: #B83232;
+  border: 1px solid rgba(184,50,50,0.25);
+  font-size: 12px; padding: 5px 11px;
+  font-family: 'Instrument Sans', sans-serif; font-weight: 600;
+  border-radius: var(--r-sm); cursor: pointer; transition: background 0.15s;
+}
+.btn-danger:hover { background: rgba(184,50,50,0.06); }
+.btn-link {
+  background: none; border: none; cursor: pointer;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 12px; font-weight: 600; color: var(--clay);
+  padding: 0; text-decoration: underline; text-underline-offset: 2px;
+}
+.btn-link:hover { opacity: 0.75; }
+
+/* ── Layout ── */
+.main-wrap { max-width: 1020px; margin: 0 auto; padding: 28px 20px 72px; position: relative; z-index: 1; }
+
+/* ── Tab bar ── */
+.tab-bar-wrap {
+  display: flex; align-items: center; gap: 4px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 26px; overflow-x: auto; scrollbar-width: none;
+}
+.tab-bar-wrap::-webkit-scrollbar { display: none; }
+.tab-btn {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  padding: 9px 18px;
+  border: none; background: transparent; color: var(--ash);
+  cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -2px; white-space: nowrap;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  transition: color 0.15s;
+}
+.tab-btn:hover { color: var(--smoke); background: var(--surface2); }
+.tab-btn.active { color: var(--clay); border-bottom-color: var(--clay); background: transparent; }
+.tab-add {
+  font-size: 17px; padding: 6px 13px; color: var(--clay);
+  border: 1px dashed var(--clay); border-bottom: none;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  margin-bottom: -2px; background: var(--clay-bg);
+  font-family: 'Instrument Sans', sans-serif; font-weight: 700; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tab-add:hover { background: var(--clay); color: #fff; }
+.summary-tab-btn {
+  margin-left: auto; background: var(--sage-bg); color: var(--sage);
+  font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+}
+.summary-tab-btn.active { border-bottom-color: var(--sage); color: var(--sage); }
+
+/* ── Cards ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px 22px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.card-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--ash); font-weight: 500;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── Grid ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; }
+@media (max-width: 700px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+/* ── Fields ── */
+.field-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.field-group:last-child { margin-bottom: 0; }
+.field-group label, label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ash);
+}
+input[type="number"], input[type="text"] {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 8px 11px;
+  font-size: 14px;
+  font-family: 'Instrument Sans', sans-serif;
+  color: var(--smoke);
+  width: 100%;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+}
+input::-webkit-inner-spin-button, input::-webkit-outer-spin-button { -webkit-appearance: none; }
+input:focus { outline: none; border-color: var(--clay); background: var(--card); }
+.pfx { position: relative; }
+.pfx-sym {
+  position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+  font-family: 'DM Mono', monospace; font-size: 12px; color: var(--ash); pointer-events: none;
+}
+.pfx input { padding-left: 20px; }
+.sfx { position: relative; }
+.sfx-sym {
+  position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ash); pointer-events: none;
+}
+.sfx input { padding-right: 34px; }
+
+/* ── Line items ── */
+.li-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 8px; }
+.li-row { display: grid; grid-template-columns: 1fr 100px 28px; gap: 7px; align-items: center; }
+.li-total {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; color: var(--clay); font-weight: 500;
+  text-align: right; padding: 6px 0 4px;
+  border-top: 1px dashed var(--border); margin-top: 4px;
+}
+
+/* ── Fixed costs panel ── */
+.fixed-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--clay);
+  border-radius: var(--r-lg);
+  padding: 18px 22px;
+  margin-bottom: 22px;
+  box-shadow: var(--shadow-sm);
+}
+.fixed-panel-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--ash); margin-bottom: 16px;
+}
+.sec-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ash); margin-bottom: 8px;
+}
+.fixed-stats-row {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+  margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--border);
+}
+.fixed-stat { display: flex; flex-direction: column; gap: 2px; }
+.fixed-stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ash);
+}
+.fixed-stat-value {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px; color: var(--smoke); line-height: 1.1;
+}
+.fixed-stat-sub { font-size: 11px; color: var(--ash); font-family: 'Instrument Sans', sans-serif; }
+
+/* ── Results panel ── */
+.results-panel {
+  background: var(--clay-bg);
+  border: 1.5px solid var(--clay-light);
+  border-radius: var(--r-lg);
+  padding: 20px 22px;
+  margin-bottom: 14px;
+}
+
+/* ── Slider ── */
+input[type="range"] {
+  width: 100%; cursor: pointer; height: 4px;
+  margin-bottom: 10px; border: none; padding: 0;
+  -webkit-appearance: none; background: var(--clay-light); border-radius: 4px; outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--clay); cursor: pointer;
+  border: 2px solid var(--card); box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.impact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.impact-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+}
+.impact-box-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ash); margin-bottom: 4px;
+}
+.impact-box-value {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px; letter-spacing: -0.01em; line-height: 1.1;
+}
+.impact-box-sub { font-size: 11px; color: var(--ash); margin-top: 2px; font-family: 'Instrument Sans', sans-serif; }
+.rate-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.rate-bar { height: 100%; border-radius: 2px; transition: width 0.25s, background 0.25s; }
+
+/* ── Product name input ── */
+.product-name-input {
+  font-family: 'DM Serif Display', serif !important;
+  font-size: 22px !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid var(--border) !important;
+  border-radius: 0 !important;
+  padding: 3px 0 !important;
+  color: var(--smoke) !important;
+  flex: 1; max-width: 320px;
+  -moz-appearance: textfield;
+}
+.product-name-input:focus { border-bottom-color: var(--clay) !important; outline: none; }
+
+/* ── Summary / table ── */
+.summary-table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-family: 'Instrument Sans', sans-serif; font-size: 13px; }
+th {
+  text-align: left;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ash);
+  padding: 8px 12px; border-bottom: 2px solid var(--border); white-space: nowrap;
+}
+td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+.td-name { font-family: 'DM Serif Display', serif; font-size: 15px; }
+.td-num { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; font-family: 'DM Mono', monospace; font-size: 12px; }
+.td-good { color: var(--sage); }
+.td-warn { color: var(--amber); }
+
+/* ── Tooltip ── */
+.tip-wrap { position: relative; display: inline-block; }
+.tip-icon {
+  font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500;
+  width: 15px; height: 15px; border-radius: 50%;
+  background: var(--border); color: var(--ash);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: help; vertical-align: middle; margin-left: 4px;
+}
+.tip-text {
+  display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%);
+  background: var(--smoke); color: var(--cream);
+  font-family: 'Instrument Sans', sans-serif; font-size: 11px;
+  padding: 6px 10px; border-radius: var(--r-sm);
+  z-index: 200; pointer-events: none;
+  max-width: 220px; white-space: normal; text-align: center; line-height: 1.4;
+}
+.tip-wrap:hover .tip-text { display: block; }
+
+/* ── Misc ── */
+.hidden { display: none !important; }
+.snote { font-family: 'Instrument Sans', sans-serif; font-size: 12px; color: var(--ash); margin-top: 5px; }
+.empty-state { text-align: center; padding: 52px 20px; color: var(--ash); }
+.empty-state h3 { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 6px; color: var(--smoke); }
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 20px 28px;
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; letter-spacing: 0.06em;
+  color: var(--ash);
+  background: var(--card);
+  position: relative; z-index: 1;
+}
+footer a { color: var(--ash); text-decoration: underline; text-underline-offset: 2px; }
+footer a:hover { color: var(--clay); }
+
+/* ── Modal (onboarding + confirm) ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  z-index: 500; display: flex; align-items: center; justify-content: center;
+  padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--card); border-radius: var(--r-lg);
+  width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto;
+  transform: scale(0.96); transition: transform 0.2s; box-shadow: var(--shadow-md);
+}
+.modal-overlay.open .modal { transform: scale(1); }
+.modal-header {
+  padding: 28px 28px 0;
+  text-align: center;
+}
+.modal-header .suite-label { display: block; margin-bottom: 8px; }
+.modal-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px; color: var(--smoke); line-height: 1.15; margin-bottom: 8px;
+}
+.modal-title em { font-style: italic; color: var(--clay); }
+.modal-body { padding: 20px 28px 28px; }
+.modal-step {
+  display: flex; gap: 14px; margin-bottom: 18px; align-items: flex-start;
+}
+.modal-step-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px; color: var(--clay); line-height: 1;
+  min-width: 28px; padding-top: 2px;
+}
+.modal-step-text strong {
+  display: block; font-family: 'Instrument Sans', sans-serif;
+  font-size: 14px; font-weight: 600; color: var(--smoke); margin-bottom: 2px;
+}
+.modal-step-text span {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px; color: var(--ash); line-height: 1.5;
+}
+.modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 24px; }
+.btn-primary {
+  background: var(--clay); color: #fff;
+  border: none; border-radius: var(--r-sm);
+  font-family: 'Instrument Sans', sans-serif; font-size: 14px; font-weight: 600;
+  padding: 10px 24px; cursor: pointer; transition: opacity 0.15s;
+}
+.btn-primary:hover { opacity: 0.88; }
+.btn-secondary {
+  background: var(--surface2); color: var(--ash);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  font-family: 'Instrument Sans', sans-serif; font-size: 14px; font-weight: 500;
+  padding: 10px 20px; cursor: pointer; transition: background 0.15s;
+}
+.btn-secondary:hover { background: var(--border); color: var(--smoke); }
+
+/* ── Onboarding hints ── */
+.hint-callout {
+  background: var(--amber-bg);
+  border: 1px solid var(--amber);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px; color: var(--smoke); line-height: 1.5;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.hint-callout .hint-icon { font-size: 16px; flex-shrink: 0; padding-top: 1px; }
+.hint-dismiss {
+  margin-left: auto; background: none; border: none;
+  cursor: pointer; color: var(--ash); font-size: 15px; padding: 0 0 0 8px;
+  flex-shrink: 0; line-height: 1;
+}
+.hint-dismiss:hover { color: var(--smoke); }
+
+/* ── Reset menu ── */
+.reset-menu-wrap { position: relative; }
+.reset-menu {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-md); box-shadow: var(--shadow-md);
+  min-width: 210px; z-index: 200; overflow: hidden;
+  opacity: 0; pointer-events: none; transform: translateY(-4px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+.reset-menu.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+.reset-menu button {
+  display: block; width: 100%; text-align: left;
+  padding: 11px 16px; border: none; background: transparent;
+  font-family: 'Instrument Sans', sans-serif; font-size: 13px;
+  color: var(--smoke); cursor: pointer; transition: background 0.12s;
+}
+.reset-menu button:hover { background: var(--surface2); }
+.reset-menu button.danger { color: #B83232; }
+.reset-menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* ── Print ── */
+@media print {
+  .grain, header, .tab-bar-wrap, .fixed-panel, #panels-wrap,
+  footer, .btn-icon, .btn-link, .btn-danger, .btn-primary,
+  .btn-secondary, .modal-overlay, .hint-callout, .reset-menu-wrap { display: none !important; }
+  body { background: white !important; color: black !important; font-size: 12px; }
+  .main-wrap { padding: 0 !important; max-width: 100% !important; }
+  #panel-summary { display: block !important; }
+  #print-view { display: block !important; }
+  .print-hide { display: none !important; }
+  .print-page { padding: 0 !important; }
+}
+#print-view { display: none; }
+
+/* ── Mobile tweaks ── */
+@media (max-width: 640px) {
+  header { padding: 12px 16px; gap: 10px; }
+  .header-right { gap: 7px; }
+  .hfield label { display: none; }
+  .h-input { font-size: 12px; padding: 5px 8px; }
+  .main-wrap { padding: 16px 12px 60px; }
+  .fixed-panel { padding: 14px 14px; }
+  .three-col { grid-template-columns: 1fr !important; gap: 18px; }
+  .fixed-stats-row { grid-template-columns: 1fr 1fr !important; }
+  .two-col { grid-template-columns: 1fr !important; }
+  #header-explainer { grid-template-columns: 1fr !important; }
+  .tab-btn { padding: 8px 12px; font-size: 12px; }
+  .results-panel { padding: 16px 14px; }
+  .impact-grid { grid-template-columns: 1fr !important; }
+  .modal { max-height: 92vh; }
+  .modal-header, .modal-body { padding-left: 18px; padding-right: 18px; }
+}
+
+/* ── Guided tour ── */
+#tour-overlay {
+  position: fixed; inset: 0; z-index: 600;
+  pointer-events: none;
+}
+#tour-overlay.active { pointer-events: all; }
+#tour-highlight {
+  position: fixed;
+  border-radius: var(--r-md);
+  box-shadow: 0 0 0 4px var(--clay), 0 0 0 9999px rgba(0,0,0,0.55);
+  transition: top 0.35s cubic-bezier(.4,0,.2,1), left 0.35s cubic-bezier(.4,0,.2,1),
+              width 0.35s cubic-bezier(.4,0,.2,1), height 0.35s cubic-bezier(.4,0,.2,1);
+  pointer-events: none; display: none;
+}
+#tour-overlay.active #tour-highlight { display: block; }
+#tour-card {
+  position: fixed;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-md);
+  padding: 18px 20px; width: 300px;
+  transition: top 0.35s cubic-bezier(.4,0,.2,1), left 0.35s cubic-bezier(.4,0,.2,1);
+  display: none; z-index: 1;
+}
+#tour-overlay.active #tour-card { display: block; }
+.tour-step-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--clay); margin-bottom: 6px;
+}
+.tour-card-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 17px; color: var(--smoke); margin-bottom: 6px; line-height: 1.2;
+}
+.tour-card-body {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px; color: var(--ash); line-height: 1.55; margin-bottom: 16px;
+}
+.tour-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.tour-progress { display: flex; gap: 4px; align-items: center; }
+.tour-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.2s; }
+.tour-dot.active { background: var(--clay); }
+.tour-btn-next {
+  background: var(--clay); color: #fff; border: none; border-radius: var(--r-sm);
+  font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 600;
+  padding: 8px 18px; cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+}
+.tour-btn-next:hover { opacity: 0.88; }
+.tour-btn-skip {
+  background: none; border: none; cursor: pointer;
+  font-family: 'Instrument Sans', sans-serif; font-size: 12px; color: var(--ash);
+  padding: 0; text-decoration: underline; text-underline-offset: 2px;
+}
+.tour-btn-skip:hover { color: var(--smoke); }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<header>
+  <div>
+    <div class="suite-label">Studio Tools Suite</div>
+    <div class="app-title">Price It <em>Right</em></div>
+  </div>
+  <div class="header-right">
+    <div class="hfield">
+      <label for="h-hourly">Hourly rate</label>
+      <div class="pfx" style="width:88px">
+        <span class="pfx-sym">$</span>
+        <input class="h-input" type="number" id="h-hourly" value="25" min="0" step="1" style="padding-left:18px;width:88px;text-align:right;padding-right:6px">
+      </div>
+    </div>
+    <div class="hfield">
+      <label for="h-goal">Monthly goal</label>
+      <div class="pfx" style="width:100px">
+        <span class="pfx-sym">$</span>
+        <input class="h-input" type="number" id="h-goal" value="1500" min="0" step="50" style="padding-left:18px;width:100px;text-align:right;padding-right:6px">
+      </div>
+    </div>
+    <div class="hfield">
+      <label for="h-pieces">Pieces/mo</label>
+      <div class="sfx" style="width:80px">
+        <input class="h-input" type="number" id="h-pieces" value="40" min="1" step="1" style="width:80px;text-align:right;padding-right:30px">
+        <span class="sfx-sym">pcs</span>
+      </div>
+    </div>
+    <button class="btn-icon" id="theme-toggle" title="Toggle dark mode">🌙</button>
+    <div class="reset-menu-wrap">
+      <button class="btn-icon" id="reset-btn" title="Reset options" onclick="toggleResetMenu()">↺</button>
+      <div class="reset-menu" id="reset-menu">
+        <button onclick="resetProduct()">Reset this product to defaults</button>
+        <div class="reset-menu-divider"></div>
+        <button class="danger" onclick="resetAll()">Reset everything — start fresh</button>
+      </div>
+    </div>
+    <button class="btn-icon" title="Print / Save as PDF" onclick="printView()">🖨</button>
+  </div>
+</header>
+
+<!-- Onboarding modal -->
+<div class="modal-overlay" id="onboarding-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="suite-label">Studio Tools Suite</span>
+      <div class="modal-title">Welcome to Price It <em>Right</em></div>
+      <p style="font-family:'Instrument Sans',sans-serif;font-size:13px;color:var(--ash);margin-top:4px">A pricing calculator built for ceramic makers — no accounting background needed.</p>
+    </div>
+    <div class="modal-body">
+      <div class="modal-step">
+        <div class="modal-step-num">1</div>
+        <div class="modal-step-text">
+          <strong>Set your studio costs at the top</strong>
+          <span>Enter your kiln firing cost, studio overhead (rent, tools), and packaging costs as monthly totals. The app divides them across your pieces automatically.</span>
+        </div>
+      </div>
+      <div class="modal-step">
+        <div class="modal-step-num">2</div>
+        <div class="modal-step-text">
+          <strong>Add your products</strong>
+          <span>Use the + tab to add each item you make — mugs, bowls, vases. Enter your material costs and how long each piece takes you.</span>
+        </div>
+      </div>
+      <div class="modal-step">
+        <div class="modal-step-num">3</div>
+        <div class="modal-step-text">
+          <strong>See your suggested price</strong>
+          <span>The app calculates what you should charge to cover all your costs and pay yourself fairly. Drag the slider to explore what happens at different price points.</span>
+        </div>
+      </div>
+      <div class="modal-step">
+        <div class="modal-step-num">4</div>
+        <div class="modal-step-text">
+          <strong>Plan your production mix</strong>
+          <span>Head to Line Summary to see how selling a mix of products gets you to your monthly revenue goal — without needing to sell 96 mugs.</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeOnboarding()">Skip for now</button>
+        <button class="btn-primary" onclick="closeOnboarding(); startTour()">Take the tour →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal (reset all) -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-header" style="padding-bottom:20px">
+      <div class="modal-title" style="font-size:22px">Reset everything?</div>
+    </div>
+    <div class="modal-body" style="padding-top:0">
+      <p style="font-family:'Instrument Sans',sans-serif;font-size:14px;color:var(--ash);margin-bottom:20px;line-height:1.6">This will clear all your products, costs, and settings and return the app to its default state. This can't be undone.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeConfirm()">Cancel</button>
+        <button class="btn-primary" style="background:#B83232" onclick="confirmResetAll()">Yes, reset everything</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Guided tour overlay -->
+<div id="tour-overlay">
+  <div id="tour-highlight"></div>
+  <div id="tour-card">
+    <div class="tour-step-label" id="tour-step-label">Step 1 of 7</div>
+    <div class="tour-card-title" id="tour-card-title"></div>
+    <div class="tour-card-body" id="tour-card-body"></div>
+    <div class="tour-actions">
+      <button class="tour-btn-skip" onclick="endTour()">Skip tour</button>
+      <div class="tour-progress" id="tour-progress"></div>
+      <button class="tour-btn-next" id="tour-btn-next" onclick="tourNext()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Print view (hidden until print) -->
+<div id="print-view"></div>
+
+<div class="main-wrap">
+
+  <!-- Header explainer -->
+  <div id="header-explainer" style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--clay);border-radius:var(--r-lg);padding:16px 20px;margin-bottom:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--clay);margin-bottom:4px">💰 Hourly Rate</div>
+      <div style="font-family:'Instrument Sans',sans-serif;font-size:13px;color:var(--ash);line-height:1.5">What you want to pay yourself per hour of work. This gets factored into the cost of every piece you make — enter what feels fair for your skill and time.</div>
+    </div>
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--clay);margin-bottom:4px">🎯 Monthly Goal</div>
+      <div style="font-family:'Instrument Sans',sans-serif;font-size:13px;color:var(--ash);line-height:1.5">How much total revenue you want to bring in each month from your ceramics. Used to calculate how many pieces you'd need to sell to hit your target.</div>
+    </div>
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--clay);margin-bottom:4px">🏺 Pieces / Month</div>
+      <div style="font-family:'Instrument Sans',sans-serif;font-size:13px;color:var(--ash);line-height:1.5">How many pieces you typically make in a month across all product types. Used to spread your fixed studio costs — rent, kiln, packaging — evenly across your output.</div>
+    </div>
+  </div>
+
+  <!-- Fixed costs panel -->
+  <div class="fixed-panel">
+    <div class="fixed-panel-title">Monthly Fixed Costs — prorated across your pieces/mo automatically</div>
+    <div class="three-col">
+      <div>
+        <div class="sec-label">🔥 Kiln</div>
+        <div class="field-group">
+          <label>Firing cost / mo</label>
+          <div class="pfx"><span class="pfx-sym">$</span>
+            <input type="number" id="kiln-monthly" value="20" min="0" step="1">
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="sec-label">🏠 Studio Overhead</div>
+        <div class="li-list" id="overhead-list"></div>
+        <div class="li-total" id="overhead-total"></div>
+        <button class="btn-link" onclick="addGlobalItem('overhead')">+ Add item</button>
+      </div>
+      <div>
+        <div class="sec-label">📦 Packaging &amp; Fees</div>
+        <div class="li-list" id="packaging-list"></div>
+        <div class="li-total" id="packaging-total"></div>
+        <button class="btn-link" onclick="addGlobalItem('packaging')">+ Add item</button>
+      </div>
+    </div>
+    <div class="fixed-stats-row" id="fixed-stats-row"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar-wrap" id="tab-bar">
+    <button class="tab-btn tab-add" onclick="addProduct()">+</button>
+    <button class="tab-btn summary-tab-btn" onclick="switchTab('summary')">📊 Line Summary</button>
+  </div>
+
+  <div id="panels-wrap"></div>
+
+  <div id="panel-summary" class="hidden">
+    <div class="card">
+      <div class="card-label">Your Full Product Line</div>
+      <div class="summary-table-wrap" id="summary-table"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Price It Right &nbsp;•&nbsp; Made for Makers &nbsp;•&nbsp; Created by Britton Clark &nbsp;•&nbsp;
+  <a href="mailto:brittonclarkceramics@gmail.com">brittonclarkceramics@gmail.com</a>
+</footer>
+
+<script>
+// ── uid ──────────────────────────────────────────────────────────────────────
+function uid() { return Math.random().toString(36).slice(2,9); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt(n,d=2) { return '$'+(parseFloat(n)||0).toFixed(d); }
+
+// ── Defaults ─────────────────────────────────────────────────────────────────
+const DEF_OVERHEAD = [
+  { id:uid(), name:'Studio rent', mo:0 },
+  { id:uid(), name:'Tools', mo:0 },
+];
+const DEF_PACKAGING = [
+  { id:uid(), name:'Boxes', mo:0 },
+  { id:uid(), name:'Tape', mo:0 },
+  { id:uid(), name:'Labels', mo:0 },
+  { id:uid(), name:'Printer ink', mo:0 },
+  { id:uid(), name:'Packing materials', mo:0 },
+  { id:uid(), name:'Shipping costs', mo:0 },
+  { id:uid(), name:'Platform / market fees', mo:0 },
+];
+const DEF_MATERIALS = [
+  { id:uid(), name:'Clay', cost:0 },
+  { id:uid(), name:'Glazes', cost:0 },
+];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let S = {
+  products: [],
+  activeTab: null,
+  hourlyRate: 25,
+  monthlyGoal: 1500,
+  monthlyPieces: 40,
+  kilnMonthly: 20,
+  overhead: DEF_OVERHEAD.map(i=>({...i,id:uid()})),
+  packaging: DEF_PACKAGING.map(i=>({...i,id:uid()})),
+};
+
+function newProduct(name) {
+  return {
+    id: uid(), name: name||'New Product',
+    materials: DEF_MATERIALS.map(i=>({...i,id:uid()})),
+    hoursPerPiece: 1,
+    riskBuffer: 10,
+    desiredMargin: 25,
+    sliderPrice: 0,
+    sliderInited: false,
+    mixQty: 10,
+  };
+}
+
+// ── Math ─────────────────────────────────────────────────────────────────────
+function hVal(id) { return parseFloat(document.getElementById(id)?.value)||0; }
+
+function globalPerPiece(category) {
+  const pieces = hVal('h-pieces') || S.monthlyPieces;
+  const total = S[category].reduce((s,i)=>s+(parseFloat(i.mo)||0),0);
+  return pieces>0 ? total/pieces : 0;
+}
+
+function calcProduct(p) {
+  const mat  = p.materials.reduce((s,i)=>s+(parseFloat(i.cost)||0),0);
+  const ovhd = globalPerPiece('overhead');
+  const pkg  = globalPerPiece('packaging');
+  const rate = hVal('h-hourly') || S.hourlyRate;
+  const hrs  = parseFloat(p.hoursPerPiece)||0;
+  const labor = rate * hrs;
+  const rawCogs = mat + ovhd + pkg + labor;
+  const risk = rawCogs * ((parseFloat(p.riskBuffer)||0)/100);
+  const cogs = rawCogs + risk;
+  const margin = (parseFloat(p.desiredMargin)||0)/100;
+  const recommended = margin<1 ? cogs/(1-margin) : cogs;
+  return { mat, ovhd, pkg, labor, rawCogs, risk, cogs, recommended };
+}
+
+function calcSlider(p, price) {
+  const { cogs, labor } = calcProduct(p);
+  const hrs = parseFloat(p.hoursPerPiece)||0;
+  const nonLabor = cogs - labor;
+  const effective = hrs>0 ? (price - nonLabor)/hrs : 0;
+  const goal = hVal('h-goal') || S.monthlyGoal;
+  const piecesNeeded = price>0 ? Math.ceil(goal/price) : 0;
+  return { effective, piecesNeeded };
+}
+
+function calcFixed() {
+  const kiln  = hVal('kiln-monthly') || S.kilnMonthly;
+  const ovhd  = S.overhead.reduce((s,i)=>s+(parseFloat(i.mo)||0),0);
+  const pkg   = S.packaging.reduce((s,i)=>s+(parseFloat(i.mo)||0),0);
+  const total = kiln + ovhd + pkg;
+  const pieces = hVal('h-pieces') || S.monthlyPieces;
+  const goal   = hVal('h-goal')   || S.monthlyGoal;
+  return { kiln, ovhd, pkg, total, perPiece: pieces>0?total/pieces:0, goal, pieces };
+}
+
+// ── Global list rendering ─────────────────────────────────────────────────────
+function renderGlobalList(category) {
+  const listEl  = document.getElementById(category+'-list');
+  const totalEl = document.getElementById(category+'-total');
+  if (!listEl) return;
+  const items = S[category];
+  const pieces = hVal('h-pieces') || S.monthlyPieces;
+  if (listEl.children.length !== items.length) {
+    listEl.innerHTML = items.map(item => `
+      <div class="li-row" data-item-id="${item.id}">
+        <input type="text" value="${esc(item.name)}" placeholder="Item name"
+          data-item-id="${item.id}" data-category="${category}" data-field="name"
+          onchange="onGlobalItemChange(event)">
+        <div class="pfx">
+          <span class="pfx-sym">$</span>
+          <input type="number" value="${item.mo}" min="0" step="1"
+            data-item-id="${item.id}" data-category="${category}" data-field="mo"
+            onchange="onGlobalItemChange(event)"
+            style="text-align:right;padding-left:18px;padding-right:5px">
+        </div>
+        <button class="btn-icon" style="font-size:13px;padding:3px"
+          onclick="removeGlobalItem('${category}','${item.id}')">✕</button>
+      </div>`).join('');
+  } else {
+    items.forEach((item, i) => {
+      const row = listEl.children[i];
+      const nameInput = row.querySelector('[data-field="name"]');
+      const moInput   = row.querySelector('[data-field="mo"]');
+      if (nameInput && document.activeElement !== nameInput) nameInput.value = item.name;
+      if (moInput   && document.activeElement !== moInput)   moInput.value   = item.mo;
+    });
+  }
+  const totalMo = items.reduce((s,i)=>s+(parseFloat(i.mo)||0),0);
+  const pp = pieces>0 ? totalMo/pieces : 0;
+  if (totalEl) totalEl.textContent = `${fmt(totalMo,0)}/mo → ${fmt(pp)}/piece at ${pieces} pcs/mo`;
+}
+
+function onGlobalItemChange(e) {
+  const { itemId, category, field } = e.target.dataset;
+  const item = S[category].find(i=>i.id===itemId);
+  if (!item) return;
+  item[field] = field==='name' ? e.target.value : (parseFloat(e.target.value)||0);
+  afterGlobalChange();
+}
+
+function addGlobalItem(category) {
+  S[category].push({ id:uid(), name:'', mo:0 });
+  renderGlobalList(category);
+  renderFixedStats();
+  refreshActiveProduct();
+  save();
+}
+
+function removeGlobalItem(category, itemId) {
+  S[category] = S[category].filter(i=>i.id!==itemId);
+  renderGlobalList(category);
+  renderFixedStats();
+  refreshActiveProduct();
+  save();
+}
+
+function afterGlobalChange() {
+  renderFixedStats();
+  refreshActiveProduct();
+  save();
+}
+
+function renderFixedStats() {
+  const { total, perPiece, goal, pieces } = calcFixed();
+  const el = document.getElementById('fixed-stats-row');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="fixed-stat">
+      <div class="fixed-stat-label">Total fixed / mo</div>
+      <div class="fixed-stat-value">${fmt(total,0)}</div>
+      <div class="fixed-stat-sub">kiln + overhead + packaging</div>
+    </div>
+    <div class="fixed-stat">
+      <div class="fixed-stat-label">Fixed cost per piece</div>
+      <div class="fixed-stat-value">${fmt(perPiece)}</div>
+      <div class="fixed-stat-sub">at ${pieces} pcs/mo</div>
+    </div>
+    <div class="fixed-stat">
+      <div class="fixed-stat-label">Fixed % of goal</div>
+      <div class="fixed-stat-value">${goal>0?((total/goal)*100).toFixed(0):0}%</div>
+      <div class="fixed-stat-sub">of ${fmt(goal,0)}/mo goal</div>
+    </div>`;
+}
+
+// ── Product panel ─────────────────────────────────────────────────────────────
+function verdictText(effective, target, piecesNeeded, price, floor) {
+  if (price < floor) {
+    return `⚠️ <strong>This price doesn't cover your costs.</strong> You'd need to charge at least ${fmt(floor,0)} just to break even.`;
+  }
+  const diff = effective - target;
+  const absDiff = Math.abs(diff).toFixed(2);
+  if (diff >= 0) {
+    return `✅ <strong>You're paying yourself well at this price.</strong> You'd earn ${fmt(effective)}/hr — ${fmt(absDiff)} above your ${fmt(target)}/hr target. You'd need to sell ${piecesNeeded} pieces this month to hit your revenue goal.`;
+  } else {
+    return `⚠️ <strong>This price is below your target pay.</strong> You'd earn ${fmt(effective)}/hr — ${fmt(absDiff)} short of your ${fmt(target)}/hr target. Consider raising the price, or adjusting your costs.`;
+  }
+}
+
+function buildProductPanel(p) {
+  const { mat, ovhd, pkg, labor, rawCogs, risk, cogs, recommended } = calcProduct(p);
+  const rate = hVal('h-hourly') || S.hourlyRate;
+  const minS = Math.max(1, Math.floor(cogs*0.5));
+  const maxS = Math.max(Math.ceil(recommended*3), minS+10);
+  if (!p.sliderInited || p.sliderPrice<minS) { p.sliderPrice=Math.round(recommended||cogs*1.25||10); p.sliderInited=true; }
+  const sp = Math.min(Math.max(p.sliderPrice, minS), maxS);
+  const { effective, piecesNeeded } = calcSlider(p, sp);
+  const rateRatio = Math.min(effective/Math.max(rate,1),1.5);
+  const rateBarPct = Math.max(0,Math.min(100,(rateRatio/1.5)*100));
+  const rateColor = effective>=rate?'var(--sage)':effective>0?'var(--amber)':'#B83232';
+  const tot = (mat+ovhd+pkg+labor+risk)||1;
+  const pct = v=>((v/tot)*100).toFixed(0);
+
+  const costRows = [
+    ['🪨 Materials', mat, '#C4733F'],
+    ['🏠 Studio overhead', ovhd, '#1D9E75'],
+    ['📦 Packaging & fees', pkg, '#BA7517'],
+    ['⏱ Your labor', labor, '#4A6B8A'],
+    ['🛡 Safety buffer ('+p.riskBuffer+'%)', risk, '#8A6B9A'],
+  ].map(([label, val, color]) => `
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
+      <div style="font-family:'Instrument Sans',sans-serif;font-size:13px;flex:1;color:var(--smoke)">${label}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--smoke)">${fmt(val)}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--ash);width:30px;text-align:right">${cogs>0?pct(val):0}%</div>
+    </div>`).join('');
+
+  return `
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:14px">
+  <input class="product-name-input" type="text" value="${esc(p.name)}"
+    data-pid="${p.id}" data-field="name" onchange="onProductFieldChange(event)">
+  <button class="btn-danger" onclick="removeProduct('${p.id}')">Remove</button>
+</div>
+
+<div class="two-col">
+<div>
+
+  <div class="card">
+    <div class="card-label">Materials</div>
+    <div class="li-list" id="mat-list-${p.id}">
+      ${p.materials.map(item=>`
+        <div class="li-row">
+          <input type="text" value="${esc(item.name)}" placeholder="Item name"
+            data-pid="${p.id}" data-item-id="${item.id}" data-field="name" data-category="materials"
+            onchange="onMaterialChange(event)">
+          <div class="pfx"><span class="pfx-sym">$</span>
+            <input type="number" value="${item.cost}" min="0" step="0.01"
+              data-pid="${p.id}" data-item-id="${item.id}" data-field="cost" data-category="materials"
+              onchange="onMaterialChange(event)"
+              style="text-align:right;padding-left:18px;padding-right:5px">
+          </div>
+          <button class="btn-icon" style="font-size:13px;padding:3px"
+            onclick="removeMaterial('${p.id}','${item.id}')">✕</button>
+        </div>`).join('')}
+    </div>
+    <div class="li-total">Total: ${fmt(mat)} per piece</div>
+    <button class="btn-link" style="margin-top:4px" onclick="addMaterial('${p.id}')">+ Add item</button>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Labor</div>
+    <div class="field-group">
+      <label>Hours per piece</label>
+      <div class="sfx"><input type="number" value="${p.hoursPerPiece}" min="0" step="0.25"
+        data-pid="${p.id}" data-field="hoursPerPiece" onchange="onProductFieldChange(event)"
+        style="padding-right:34px"><span class="sfx-sym">hrs</span></div>
+    </div>
+    <p class="snote">Labor cost: <strong style="color:var(--clay)">${fmt(labor)}</strong> at $${rate}/hr</p>
+  </div>
+
+</div>
+<div>
+
+  <div class="results-panel">
+
+    <!-- Hero price -->
+    <div style="text-align:center;padding:18px 0 16px;border-bottom:1px solid var(--clay-light);margin-bottom:18px">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--ash);margin-bottom:6px">Suggested price for this piece</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:52px;color:var(--sage);line-height:1;letter-spacing:-0.02em">${fmt(recommended,0)}</div>
+      <div style="font-family:'Instrument Sans',sans-serif;font-size:12px;color:var(--ash);margin-top:5px">covers all your costs + ${p.desiredMargin}% profit</div>
+    </div>
+
+    <!-- Cost breakdown -->
+    <div style="margin-bottom:16px">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ash);font-weight:500;margin-bottom:12px">What goes into that price</div>
+      ${costRows}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:9px;border-top:1px dashed var(--border);margin-top:6px">
+        <span style="font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:600;color:var(--smoke)">Total cost to make</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--clay)">${fmt(cogs)}</span>
+      </div>
+      <div style="font-family:'Instrument Sans',sans-serif;font-size:11px;color:var(--ash);margin-top:5px">Don't price below ${fmt(cogs,0)} — that's where you start losing money.</div>
+    </div>
+
+    <!-- Settings -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;padding:14px;background:var(--card);border-radius:var(--r-md);border:1px solid var(--border)">
+      <div class="field-group" style="margin-bottom:0">
+        <label>Safety buffer
+          <div class="tip-wrap" style="display:inline-block"><span class="tip-icon">?</span>
+          <span class="tip-text">Extra cushion for failed firings and surprise costs. Added before profit is calculated.</span></div>
+        </label>
+        <div style="display:flex;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;margin-top:4px">
+          ${[5,10,15,20].map(v=>`<button style="flex:1;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:7px 2px;border:none;cursor:pointer;transition:background 0.12s;background:${(parseFloat(p.riskBuffer)||0)===v?'var(--clay)':'var(--surface2)'};color:${(parseFloat(p.riskBuffer)||0)===v?'#fff':'var(--ash)'}"
+            onclick="setRiskBuffer('${p.id}',${v})">${v}%</button>`).join('')}
+        </div>
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <label>Profit goal
+          <div class="tip-wrap" style="display:inline-block"><span class="tip-icon">?</span>
+          <span class="tip-text">How much extra beyond your costs? 20–40% is typical for handmade goods.</span></div>
+        </label>
+        <div class="sfx" style="margin-top:4px"><input type="number" value="${p.desiredMargin}" min="0" max="90" step="5"
+          data-pid="${p.id}" data-field="desiredMargin" onchange="onProductFieldChange(event)"
+          style="padding-right:28px"><span class="sfx-sym">%</span></div>
+      </div>
+    </div>
+
+    <!-- Price explorer -->
+    <div style="background:var(--card);border-radius:var(--r-md);padding:16px 18px;border:1px solid var(--border)">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ash);margin-bottom:12px">What if I charge a different price?</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+        <span style="font-family:'Instrument Sans',sans-serif;font-size:12px;color:var(--ash)">Drag to explore</span>
+        <span style="font-family:'DM Serif Display',serif;font-size:30px;color:var(--clay);line-height:1" id="sdisplay-${p.id}">${fmt(sp,0)}</span>
+      </div>
+      <input type="range" id="slider-${p.id}" min="${minS}" max="${maxS}" step="1" value="${sp}"
+        oninput="onSlider('${p.id}',this.value)">
+      <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10px;color:var(--ash);margin-top:-6px;margin-bottom:14px">
+        <span>${fmt(minS,0)}</span>
+        <span style="color:var(--amber)">⚠ floor: ${fmt(cogs,0)}</span>
+        <span>${fmt(maxS,0)}</span>
+      </div>
+
+      <div id="verdict-${p.id}" style="font-family:'Instrument Sans',sans-serif;font-size:13px;line-height:1.55;padding:10px 12px;border-radius:var(--r-sm);margin-bottom:12px;background:${effective>=rate?'var(--sage-bg)':'var(--amber-bg)'};color:var(--smoke)">
+        ${verdictText(effective, rate, piecesNeeded, sp, cogs)}
+      </div>
+
+      <div class="impact-grid">
+        <div class="impact-box" id="impact-hourly-${p.id}">
+          <div class="impact-box-label">You'd earn per hour</div>
+          <div class="impact-box-value" style="color:${rateColor}">${fmt(effective)}</div>
+          <div class="impact-box-sub">Target: ${fmt(rate)}/hr</div>
+          <div class="rate-bar-wrap"><div class="rate-bar" style="width:${rateBarPct}%;background:${rateColor}"></div></div>
+        </div>
+        <div class="impact-box" id="impact-pieces-${p.id}">
+          <div class="impact-box-label">Pieces to hit goal</div>
+          <div class="impact-box-value">${piecesNeeded}</div>
+          <div class="impact-box-sub">Goal: ${fmt(hVal('h-goal')||S.monthlyGoal,0)}/mo</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</div>`;
+}
+
+// ── Product event handlers ────────────────────────────────────────────────────
+function onProductFieldChange(e) {
+  const { pid, field } = e.target.dataset;
+  const p = S.products.find(p=>p.id===pid);
+  if (!p) return;
+  if (field==='name') { p.name=e.target.value; refreshTabs(); }
+  else { p[field]=parseFloat(e.target.value)||0; p.sliderInited=false; }
+  refreshProductOutputs(p);
+  save();
+}
+
+function onMaterialChange(e) {
+  const { pid, itemId, field } = e.target.dataset;
+  const p = S.products.find(p=>p.id===pid);
+  if (!p) return;
+  const item = p.materials.find(i=>i.id===itemId);
+  if (!item) return;
+  item[field] = field==='name' ? e.target.value : (parseFloat(e.target.value)||0);
+  p.sliderInited=false;
+  refreshProductOutputs(p);
+  save();
+}
+
+function addMaterial(pid) {
+  const p = S.products.find(p=>p.id===pid);
+  if (!p) return;
+  p.materials.push({ id:uid(), name:'', cost:0 });
+  renderProduct(pid);
+  save();
+}
+
+function removeMaterial(pid, itemId) {
+  const p = S.products.find(p=>p.id===pid);
+  if (!p) return;
+  p.materials = p.materials.filter(i=>i.id!==itemId);
+  renderProduct(pid);
+  save();
+}
+
+function setRiskBuffer(pid, val) {
+  const p = S.products.find(p=>p.id===pid);
+  if (!p) return;
+  p.riskBuffer=val; p.sliderInited=false;
+  renderProduct(pid);
+  save();
+}
+
+function refreshProductOutputs(p) { renderProduct(p.id); }
+
+function onSlider(pid, value) {
+  const p = S.products.find(p=>p.id===pid);
+  if (!p) return;
+  p.sliderPrice = parseFloat(value);
+  const rate = hVal('h-hourly')||S.hourlyRate;
+  const { effective, piecesNeeded } = calcSlider(p, p.sliderPrice);
+  const rateRatio = Math.min(effective/Math.max(rate,1),1.5);
+  const rateBarPct = Math.max(0,Math.min(100,(rateRatio/1.5)*100));
+  const rateColor = effective>=rate?'var(--sage)':effective>0?'var(--amber)':'#B83232';
+  const disp = document.getElementById('sdisplay-'+pid);
+  if (disp) disp.textContent = fmt(p.sliderPrice,0);
+  const hBox = document.getElementById('impact-hourly-'+pid);
+  if (hBox) {
+    hBox.querySelector('.impact-box-value').textContent = fmt(effective);
+    hBox.querySelector('.impact-box-value').style.color = rateColor;
+    hBox.querySelector('.impact-box-sub').textContent = 'Target: '+fmt(rate)+'/hr';
+    const bar = hBox.querySelector('.rate-bar');
+    if (bar) { bar.style.width=rateBarPct+'%'; bar.style.background=rateColor; }
+  }
+  const pBox = document.getElementById('impact-pieces-'+pid);
+  if (pBox) {
+    pBox.querySelector('.impact-box-value').textContent = piecesNeeded;
+    pBox.querySelector('.impact-box-sub').textContent = 'Goal: '+fmt(hVal('h-goal')||S.monthlyGoal,0)+'/mo';
+  }
+  const verdict = document.getElementById('verdict-'+pid);
+  if (verdict) {
+    const { cogs } = calcProduct(p);
+    verdict.innerHTML = verdictText(effective, rate, piecesNeeded, p.sliderPrice, cogs);
+    verdict.style.background = effective>=rate ? 'var(--sage-bg)' : 'var(--amber-bg)';
+  }
+  save();
+}
+
+// ── DOM management ────────────────────────────────────────────────────────────
+function getPanel(id) { return document.getElementById('panel-'+id); }
+
+function renderProduct(pid) {
+  const p = S.products.find(p=>p.id===pid);
+  if (!p) return;
+  const panel = getPanel(p.id);
+  if (!panel||panel.classList.contains('hidden')) return;
+  panel.innerHTML = buildProductPanel(p);
+}
+
+function renderAllPanels() {
+  const wrap = document.getElementById('panels-wrap');
+  S.products.forEach(p => {
+    let panel = getPanel(p.id);
+    if (!panel) { panel=document.createElement('div'); panel.id='panel-'+p.id; panel.className='hidden'; wrap.appendChild(panel); }
+    panel.innerHTML = buildProductPanel(p);
+  });
+  Array.from(wrap.children).forEach(el=>{
+    const id=el.id.replace('panel-','');
+    if (!S.products.find(p=>p.id===id)) el.remove();
+  });
+}
+
+function refreshTabs() {
+  const bar = document.getElementById('tab-bar');
+  bar.querySelectorAll('[data-product-tab]').forEach(el => el.remove());
+  const addBtn = bar.querySelector('.tab-add');
+  S.products.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (S.activeTab === p.id ? ' active' : '');
+    btn.dataset.productTab = p.id;
+    btn.textContent = p.name || 'Product';
+    btn.onclick = () => switchTab(p.id);
+    addBtn.insertAdjacentElement('afterend', btn);
+  });
+  bar.querySelector('.summary-tab-btn').classList.toggle('active', S.activeTab === 'summary');
+}
+
+function switchTab(id) {
+  S.activeTab=id;
+  document.querySelectorAll('#panels-wrap > div, #panel-summary').forEach(el=>el.classList.add('hidden'));
+  const target=id==='summary'?document.getElementById('panel-summary'):getPanel(id);
+  if (target) target.classList.remove('hidden');
+  if (id==='summary') renderSummary();
+  refreshTabs();
+  save();
+}
+
+function refreshActiveProduct() {
+  if (S.activeTab && S.activeTab!=='summary') renderProduct(S.activeTab);
+}
+
+function renderSummary() {
+  const wrap = document.getElementById('summary-table');
+  if (!S.products.length) {
+    wrap.innerHTML = `<div class="empty-state"><div style="font-size:40px;margin-bottom:12px">🏺</div><h3>No products yet</h3><p style="font-family:'Instrument Sans',sans-serif;font-size:13px;color:var(--ash);margin-top:4px">Add a product above to get started.</p></div>`;
+    return;
+  }
+  const COLORS = ['#C4733F','#1D9E75','#BA7517','#4A6B8A','#8A6B9A','#3D6B6B'];
+  const rate = hVal('h-hourly') || S.hourlyRate;
+  const goal = hVal('h-goal') || S.monthlyGoal;
+
+  const rows = S.products.map((p,i) => {
+    const { cogs, recommended } = calcProduct(p);
+    const sp = p.sliderPrice || recommended;
+    const { effective } = calcSlider(p, sp);
+    const met = effective >= rate;
+    return `<tr>
+      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLORS[i%COLORS.length]};margin-right:8px;vertical-align:middle"></span><span class="td-name">${esc(p.name)}</span></td>
+      <td class="td-num">${fmt(cogs)}</td>
+      <td class="td-num">${fmt(recommended)}</td>
+      <td class="td-num">${p.desiredMargin}%</td>
+      <td class="td-num">${fmt(sp,0)}</td>
+      <td class="td-num ${met?'td-good':'td-warn'}">${fmt(effective)}/hr</td>
+    </tr>`;
+  }).join('');
+
+  const mixTotal = S.products.reduce((s,p) => {
+    const { recommended } = calcProduct(p);
+    const sp = p.sliderPrice || recommended;
+    return s + (sp * (parseFloat(p.mixQty)||0));
+  }, 0);
+  const mixPct = goal > 0 ? Math.min(mixTotal / goal, 1) : 0;
+  const remaining = Math.max(goal - mixTotal, 0);
+  const barColor = mixTotal >= goal ? 'var(--sage)' : mixTotal > goal*0.66 ? 'var(--amber)' : 'var(--clay)';
+
+  const mixRows = S.products.map((p,i) => {
+    const { recommended } = calcProduct(p);
+    const sp = p.sliderPrice || recommended;
+    const qty = parseFloat(p.mixQty) || 0;
+    const lineRev = sp * qty;
+    return `<div style="display:grid;grid-template-columns:14px 1fr 90px 80px 80px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLORS[i%COLORS.length]}"></span>
+      <span style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--smoke)">${esc(p.name)}</span>
+      <div style="display:flex;align-items:center;gap:5px">
+        <input type="number" value="${qty}" min="0" step="1"
+          data-pid="${p.id}" onchange="onMixQtyChange(event)"
+          style="width:58px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 7px;color:var(--smoke)">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ash)">pcs</span>
+      </div>
+      <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--ash);text-align:right">@ ${fmt(sp,0)} ea</span>
+      <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;text-align:right;color:var(--smoke)">${fmt(lineRev,0)}</span>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div style="margin-bottom:32px">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ash);margin-bottom:16px">Monthly Production Mix</div>
+      <div style="display:grid;grid-template-columns:14px 1fr 90px 80px 80px;gap:10px;padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:2px">
+        <span></span>
+        ${['Product','Qty / mo','Price','Revenue'].map(h=>`<span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ash)">${h}</span>`).join('')}
+      </div>
+      ${mixRows}
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:12px 0 5px;margin-top:2px">
+        <span style="font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:600;color:var(--smoke)">Total projected revenue</span>
+        <span style="font-family:'DM Serif Display',serif;font-size:26px;color:${mixTotal>=goal?'var(--sage)':'var(--smoke)'}">${fmt(mixTotal,0)}</span>
+      </div>
+      <div style="height:8px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:7px">
+        <div style="height:100%;width:${(mixPct*100).toFixed(1)}%;background:${barColor};border-radius:99px;transition:width 0.3s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-family:'Instrument Sans',sans-serif;font-size:12px">
+        <span style="color:var(--ash)">Goal: ${fmt(goal,0)}/mo</span>
+        <span style="font-weight:600;color:${remaining===0?'var(--sage)':'var(--amber)'}">
+          ${remaining===0 ? '🎉 Goal reached!' : fmt(remaining,0)+' still to go'}
+        </span>
+      </div>
+      ${mixTotal < goal ? `<div style="font-family:'Instrument Sans',sans-serif;font-size:12px;color:var(--ash);margin-top:10px;padding:10px 13px;background:var(--surface2);border-radius:var(--r-md);line-height:1.6">
+        💡 Adjust quantities until the bar fills. Prices come from each product's slider — set those first, then plan your mix here.
+      </div>` : ''}
+    </div>
+
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ash);margin-bottom:14px">Pricing Reference</div>
+      <div class="summary-table-wrap">
+        <table><thead><tr>
+          <th>Product</th>
+          <th style="text-align:right">Cost to make</th>
+          <th style="text-align:right">Suggested price</th>
+          <th style="text-align:right">Profit goal</th>
+          <th style="text-align:right">Explore price</th>
+          <th style="text-align:right">You'd earn / hr</th>
+        </tr></thead><tbody>${rows}</tbody></table>
+      </div>
+      <p style="font-family:'Instrument Sans',sans-serif;font-size:11px;color:var(--ash);margin-top:9px">Explore price and hourly rate reflect each product's slider. Green = at or above your target rate.</p>
+    </div>`;
+}
+
+function onMixQtyChange(e) {
+  const pid = e.target.dataset.pid;
+  const p = S.products.find(p=>p.id===pid);
+  if (!p) return;
+  p.mixQty = parseFloat(e.target.value) || 0;
+  renderSummary();
+  save();
+}
+
+// ── Product CRUD ──────────────────────────────────────────────────────────────
+function addProduct() {
+  const names=['Mug','Bowl','Vase','Plate','Tumbler','Planter','Mug'];
+  const p=newProduct(names[S.products.length%names.length]);
+  S.products.push(p);
+  renderAllPanels();
+  refreshTabs();
+  switchTab(p.id);
+  save();
+}
+
+function removeProduct(id) {
+  if (S.products.length<=1) { alert('Keep at least one product.'); return; }
+  S.products=S.products.filter(p=>p.id!==id);
+  renderAllPanels();
+  refreshTabs();
+  switchTab(S.products[0].id);
+  save();
+}
+
+// ── Persistence ───────────────────────────────────────────────────────────────
+function save() {
+  try {
+    S.hourlyRate    = hVal('h-hourly')  || S.hourlyRate;
+    S.monthlyGoal   = hVal('h-goal')    || S.monthlyGoal;
+    S.monthlyPieces = hVal('h-pieces')  || S.monthlyPieces;
+    S.kilnMonthly   = hVal('kiln-monthly') || S.kilnMonthly;
+    localStorage.setItem('pir-v5-state', JSON.stringify(S));
+  } catch(e) {}
+}
+
+function migrateProd(p) {
+  if (!Array.isArray(p.materials)) p.materials=DEF_MATERIALS.map(i=>({...i,id:uid()}));
+  if (p.riskBuffer===undefined) p.riskBuffer=10;
+  if (p.mixQty===undefined) p.mixQty=10;
+  delete p.materialItems; delete p.overheadItems; delete p.packagingItems;
+  delete p.targetHourlyRate;
+  return p;
+}
+
+function load() {
+  try {
+    const raw=localStorage.getItem('pir-v5-state');
+    if (raw) {
+      const sv=JSON.parse(raw);
+      S.products     = (sv.products||[]).map(migrateProd);
+      S.hourlyRate   = sv.hourlyRate   || 25;
+      S.monthlyGoal  = sv.monthlyGoal  || 1500;
+      S.monthlyPieces= sv.monthlyPieces|| 40;
+      S.kilnMonthly  = sv.kilnMonthly  || 20;
+      S.overhead  = Array.isArray(sv.overhead)  && sv.overhead.length  ? sv.overhead  : DEF_OVERHEAD.map(i=>({...i,id:uid()}));
+      S.packaging = Array.isArray(sv.packaging) && sv.packaging.length ? sv.packaging : DEF_PACKAGING.map(i=>({...i,id:uid()}));
+      S.activeTab = sv.activeTab || null;
+    }
+  } catch(e) {}
+}
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+['pir-state','pir-v2-state','pir-v3-state','pir-v4-state'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+
+function initTheme() {
+  const sv=localStorage.getItem('pir-theme');
+  if (sv==='dark'||(!sv&&window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.setAttribute('data-theme','dark');
+    document.getElementById('theme-toggle').textContent='☀️';
+  }
+}
+document.getElementById('theme-toggle').addEventListener('click',()=>{
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('theme-toggle').textContent=dark?'🌙':'☀️';
+  localStorage.setItem('pir-theme',dark?'light':'dark');
+});
+
+document.getElementById('kiln-monthly').addEventListener('change', ()=>{ renderFixedStats(); refreshActiveProduct(); save(); });
+
+['h-hourly','h-goal','h-pieces'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', ()=>{
+    S.hourlyRate    = hVal('h-hourly');
+    S.monthlyGoal   = hVal('h-goal');
+    S.monthlyPieces = hVal('h-pieces');
+    renderGlobalList('overhead');
+    renderGlobalList('packaging');
+    renderFixedStats();
+    refreshActiveProduct();
+    save();
+  });
+});
+
+// ── Onboarding ────────────────────────────────────────────────────────────────
+function showOnboarding() {
+  document.getElementById('onboarding-modal').classList.add('open');
+}
+function closeOnboarding() {
+  document.getElementById('onboarding-modal').classList.remove('open');
+  localStorage.setItem('pir-onboarded','1');
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+function toggleResetMenu() {
+  const menu = document.getElementById('reset-menu');
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const wrap = document.querySelector('.reset-menu-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('reset-menu')?.classList.remove('open');
+  }
+});
+
+function resetProduct() {
+  document.getElementById('reset-menu').classList.remove('open');
+  if (!S.activeTab || S.activeTab === 'summary') return;
+  const p = S.products.find(p => p.id === S.activeTab);
+  if (!p) return;
+  if (!confirm(`Reset "${p.name}" to defaults? This clears its materials and settings.`)) return;
+  const idx = S.products.indexOf(p);
+  const fresh = newProduct(p.name);
+  S.products[idx] = fresh;
+  S.activeTab = fresh.id;
+  renderAllPanels();
+  refreshTabs();
+  switchTab(fresh.id);
+  save();
+}
+
+function resetAll() {
+  document.getElementById('reset-menu').classList.remove('open');
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-modal').classList.remove('open');
+}
+
+function confirmResetAll() {
+  closeConfirm();
+  ['pir-v5-state','pir-onboarded'].forEach(k => {
+    try { localStorage.removeItem(k); } catch(e) {}
+  });
+  location.reload();
+}
+
+// ── Print view ────────────────────────────────────────────────────────────────
+function printView() {
+  const goal = hVal('h-goal') || S.monthlyGoal;
+  const rate = hVal('h-hourly') || S.hourlyRate;
+  const COLORS = ['#C4733F','#1D9E75','#BA7517','#4A6B8A','#8A6B9A','#3D6B6B'];
+  const { total, perPiece } = calcFixed();
+
+  const productSections = S.products.map((p, i) => {
+    const { mat, ovhd, pkg, labor, risk, cogs, recommended } = calcProduct(p);
+    const sp = p.sliderPrice || recommended;
+    const { effective } = calcSlider(p, sp);
+    const color = COLORS[i % COLORS.length];
+    return `
+      <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #ddd;page-break-inside:avoid">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+          <div style="font-family:'DM Serif Display',serif;font-size:20px;color:#2C2C2A">${esc(p.name)}</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:#1D9E75">Suggested: $${recommended.toFixed(0)}</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;font-family:sans-serif">
+          <tr style="background:#f5f1eb">
+            <td style="padding:5px 8px;font-weight:600">Materials</td><td style="padding:5px 8px;text-align:right">$${mat.toFixed(2)}</td>
+            <td style="padding:5px 8px;font-weight:600">Overhead (prorated)</td><td style="padding:5px 8px;text-align:right">$${ovhd.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 8px;font-weight:600">Packaging & fees</td><td style="padding:5px 8px;text-align:right">$${pkg.toFixed(2)}</td>
+            <td style="padding:5px 8px;font-weight:600">Your labor (${p.hoursPerPiece} hrs)</td><td style="padding:5px 8px;text-align:right">$${labor.toFixed(2)}</td>
+          </tr>
+          <tr style="background:#f5f1eb">
+            <td style="padding:5px 8px;font-weight:600">Safety buffer (${p.riskBuffer}%)</td><td style="padding:5px 8px;text-align:right">$${risk.toFixed(2)}</td>
+            <td style="padding:5px 8px;font-weight:700;color:#C4733F">Total cost to make</td><td style="padding:5px 8px;text-align:right;font-weight:700;color:#C4733F">$${cogs.toFixed(2)}</td>
+          </tr>
+        </table>
+        <div style="margin-top:8px;font-size:12px;font-family:sans-serif;color:#5F5E5A">
+          At explore price $${sp.toFixed(0)}: you'd earn <strong style="color:${effective>=rate?'#1D9E75':'#BA7517'}">$${effective.toFixed(2)}/hr</strong>
+          (target: $${rate.toFixed(0)}/hr)
+        </div>
+      </div>`;
+  }).join('');
+
+  const mixTotal = S.products.reduce((s,p) => {
+    const { recommended } = calcProduct(p);
+    const sp = p.sliderPrice || recommended;
+    return s + sp * (parseFloat(p.mixQty)||0);
+  }, 0);
+
+  const mixRows = S.products.map((p,i) => {
+    const { recommended } = calcProduct(p);
+    const sp = p.sliderPrice || recommended;
+    return `<tr>
+      <td style="padding:6px 8px;font-family:'DM Serif Display',serif;font-size:14px">${esc(p.name)}</td>
+      <td style="padding:6px 8px;text-align:right;font-family:monospace">${parseFloat(p.mixQty)||0} pcs</td>
+      <td style="padding:6px 8px;text-align:right;font-family:monospace">$${sp.toFixed(0)} ea</td>
+      <td style="padding:6px 8px;text-align:right;font-family:monospace;font-weight:600">$${(sp*(parseFloat(p.mixQty)||0)).toFixed(0)}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head>
+    <meta charset="UTF-8"><title>Price It Right — Summary</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+      body { font-family:'Instrument Sans',sans-serif; color:#2C2C2A; max-width:760px; margin:0 auto; padding:32px 24px; }
+      h1 { font-family:'DM Serif Display',serif; font-size:32px; color:#C4733F; margin-bottom:4px; }
+      .meta { font-size:12px; color:#9E9C96; font-family:monospace; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:28px; }
+      h2 { font-family:monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#9E9C96; margin-bottom:14px; border-bottom:1px solid #ddd; padding-bottom:6px; }
+      table { width:100%; border-collapse:collapse; }
+      @media print { @page { margin:1.5cm; } }
+    </style>
+  </head><body>
+    <h1>Price It <em>Right</em></h1>
+    <div class="meta">Studio Tools Suite &nbsp;•&nbsp; Created by Britton Clark &nbsp;•&nbsp; Printed ${new Date().toLocaleDateString()}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px;padding:16px;background:#FBF3EC;border-radius:8px">
+      <div><div style="font-family:monospace;font-size:10px;text-transform:uppercase;color:#9E9C96;letter-spacing:0.1em">Target hourly rate</div><div style="font-family:'DM Serif Display',serif;font-size:24px">$${rate.toFixed(0)}/hr</div></div>
+      <div><div style="font-family:monospace;font-size:10px;text-transform:uppercase;color:#9E9C96;letter-spacing:0.1em">Monthly goal</div><div style="font-family:'DM Serif Display',serif;font-size:24px">$${goal.toFixed(0)}</div></div>
+      <div><div style="font-family:monospace;font-size:10px;text-transform:uppercase;color:#9E9C96;letter-spacing:0.1em">Fixed costs / piece</div><div style="font-family:'DM Serif Display',serif;font-size:24px">$${perPiece.toFixed(2)}</div></div>
+    </div>
+    <h2>Products</h2>
+    ${productSections}
+    <h2 style="margin-top:28px">Monthly Production Mix</h2>
+    <table>
+      <thead><tr style="background:#f5f1eb">
+        <th style="padding:7px 8px;text-align:left;font-family:monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase">Product</th>
+        <th style="padding:7px 8px;text-align:right;font-family:monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase">Qty</th>
+        <th style="padding:7px 8px;text-align:right;font-family:monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase">Price</th>
+        <th style="padding:7px 8px;text-align:right;font-family:monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase">Revenue</th>
+      </tr></thead>
+      <tbody>${mixRows}</tbody>
+      <tfoot><tr style="border-top:2px solid #ddd">
+        <td colspan="3" style="padding:8px;font-weight:600;font-family:'DM Serif Display',serif">Total projected revenue</td>
+        <td style="padding:8px;text-align:right;font-family:'DM Serif Display',serif;font-size:20px;color:${mixTotal>=goal?'#1D9E75':'#C4733F'}">$${mixTotal.toFixed(0)}</td>
+      </tr></tfoot>
+    </table>
+    <div style="margin-top:6px;font-size:12px;color:#9E9C96">Goal: $${goal.toFixed(0)}/mo &nbsp;•&nbsp; ${mixTotal>=goal?'🎉 Goal reached!':'$'+(goal-mixTotal).toFixed(0)+' still to go'}</div>
+    <script>window.onload=()=>window.print()<\/script>
+  </body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) {
+    alert('Pop-up blocked. Please allow pop-ups for this page, then try again.');
+    return;
+  }
+  win.document.write(html);
+  win.document.close();
+}
+
+// ── Guided tour ──────────────────────────────────────────────────────────────
+const TOUR_STEPS = [
+  {
+    target: '#header-explainer',
+    title: 'Three numbers run everything',
+    body: 'Before anything else, set your hourly rate (what you want to earn), your monthly revenue goal, and how many pieces you make per month. These drive every calculation in the app.',
+    position: 'below',
+  },
+  {
+    target: '.fixed-panel',
+    title: 'Your monthly studio costs',
+    body: 'Enter your fixed costs once here — kiln electricity, rent, tools, boxes, shipping supplies. The app automatically spreads these across every piece you make so you never forget to account for them.',
+    position: 'below',
+  },
+  {
+    target: '.tab-add',
+    title: 'Add your products',
+    body: 'Use the + button to add each type of piece you make — mugs, bowls, vases, plates. You\'ll price each one separately so you can see exactly what to charge for every item in your line.',
+    position: 'below',
+  },
+  {
+    target: () => document.querySelector('[data-product-tab]'),
+    title: 'Your first product',
+    body: 'Click a product tab to open it. Each product has its own materials and labor — the things that are unique to that piece. Your fixed studio costs flow in automatically from the panel above.',
+    position: 'below',
+  },
+  {
+    target: () => document.querySelector('#panels-wrap .card'),
+    title: 'What does this piece cost to make?',
+    body: 'Enter your clay and glaze costs per piece here. These are the direct material costs — what you actually spend buying supplies for that specific item.',
+    position: 'right',
+  },
+  {
+    target: () => document.querySelectorAll('#panels-wrap .card')[1],
+    title: 'How long does it take you?',
+    body: 'Enter the number of hours this piece takes — throwing, trimming, glazing, all of it. The app multiplies that by your hourly rate to calculate your labor cost per piece.',
+    position: 'right',
+  },
+  {
+    target: '.results-panel',
+    title: 'Your suggested price — and what happens when you change it',
+    body: 'The big number is what you should charge to cover all your costs and pay yourself fairly. Drag the slider below it to explore different price points and see instantly how your hourly earnings and pieces-needed change.',
+    position: 'left',
+  },
+];
+
+let tourStep = 0;
+
+function startTour() {
+  tourStep = 0;
+  // Make sure we're on a product tab so product-specific targets exist
+  if (S.activeTab === 'summary' && S.products.length) {
+    switchTab(S.products[0].id);
+  }
+  document.getElementById('tour-overlay').classList.add('active');
+  renderTourStep();
+}
+
+function endTour() {
+  document.getElementById('tour-overlay').classList.remove('active');
+  localStorage.setItem('pir-tour-done', '1');
+}
+
+function tourNext() {
+  if (tourStep >= TOUR_STEPS.length - 1) { endTour(); return; }
+  tourStep++;
+  renderTourStep();
+}
+
+function renderTourStep() {
+  const step = TOUR_STEPS[tourStep];
+  const total = TOUR_STEPS.length;
+
+  // Resolve target
+  const targetEl = typeof step.target === 'function' ? step.target() : document.querySelector(step.target);
+
+  // Update card content
+  document.getElementById('tour-step-label').textContent = `Step ${tourStep + 1} of ${total}`;
+  document.getElementById('tour-card-title').textContent = step.title;
+  document.getElementById('tour-card-body').textContent = step.body;
+  document.getElementById('tour-btn-next').textContent = tourStep === total - 1 ? 'Done ✓' : 'Next →';
+
+  // Progress dots
+  const prog = document.getElementById('tour-progress');
+  prog.innerHTML = TOUR_STEPS.map((_,i) =>
+    `<div class="tour-dot${i===tourStep?' active':''}"></div>`).join('');
+
+  if (!targetEl) { endTour(); return; }
+
+  // Scroll target into view with breathing room
+  targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Position highlight after scroll settles
+  setTimeout(() => {
+    const rect = targetEl.getBoundingClientRect();
+    const pad = 6;
+    const hl = document.getElementById('tour-highlight');
+    hl.style.top    = (rect.top    - pad) + 'px';
+    hl.style.left   = (rect.left   - pad) + 'px';
+    hl.style.width  = (rect.width  + pad * 2) + 'px';
+    hl.style.height = (rect.height + pad * 2) + 'px';
+
+    // Position card using viewport coordinates only
+    const card = document.getElementById('tour-card');
+    const cardW = 300, margin = 16;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let top, left;
+
+    if (step.position === 'below') {
+      top  = rect.bottom + pad + margin;
+      left = Math.min(Math.max(rect.left, margin), vw - cardW - margin);
+    } else if (step.position === 'right') {
+      top  = rect.top;
+      left = rect.right + margin;
+      if (left + cardW > vw - margin) left = rect.left - cardW - margin;
+    } else if (step.position === 'left') {
+      top  = rect.top;
+      left = rect.left - cardW - margin;
+      if (left < margin) left = rect.right + margin;
+    } else {
+      top  = rect.top - 200 - margin;
+      left = Math.min(Math.max(rect.left, margin), vw - cardW - margin);
+    }
+
+    // Clamp within viewport
+    top  = Math.max(margin, Math.min(top,  vh - 220));
+    left = Math.max(margin, Math.min(left, vw - cardW - margin));
+
+    card.style.top  = top  + 'px';
+    card.style.left = left + 'px';
+  }, 350);
+}
+
+// Close tour if clicking outside highlight
+document.getElementById('tour-overlay').addEventListener('click', e => {
+  const card = document.getElementById('tour-card');
+  const hl   = document.getElementById('tour-highlight');
+  if (!card.contains(e.target) && !hl.contains(e.target)) endTour();
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+initTheme();
+load();
+
+const _h=document.getElementById('h-hourly');   if(_h)  _h.value=S.hourlyRate;
+const _g=document.getElementById('h-goal');      if(_g)  _g.value=S.monthlyGoal;
+const _p=document.getElementById('h-pieces');    if(_p)  _p.value=S.monthlyPieces;
+const _k=document.getElementById('kiln-monthly');if(_k)  _k.value=S.kilnMonthly;
+
+if (!S.products.length) {
+  const mug=newProduct('Mug');
+  mug.materials=[{ id:uid(), name:'Clay', cost:1.50 },{ id:uid(), name:'Glazes', cost:0.75 }];
+  mug.hoursPerPiece=1.5; mug.desiredMargin=25; mug.riskBuffer=10;
+  S.products.push(mug);
+}
+if (!S.activeTab) S.activeTab=S.products[0]?.id;
+
+renderGlobalList('overhead');
+renderGlobalList('packaging');
+renderFixedStats();
+renderAllPanels();
+refreshTabs();
+switchTab(S.activeTab);
+
+// Onboarding
+if (!localStorage.getItem('pir-onboarded')) {
+  setTimeout(showOnboarding, 400);
+}
+</script>
+</body>
+</html>
